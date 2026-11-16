@@ -1,0 +1,11 @@
+build/
+build-*/
+data/
+out/
+*.xlsx
+*.fods
+*.csv
+.vs/
+.vscode/
+.idea/
+CMakeUserPresets.json

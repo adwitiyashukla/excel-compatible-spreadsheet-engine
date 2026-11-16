@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.20)
+
+set(DATA_DIR "${CMAKE_CURRENT_LIST_DIR}/../data")
+set(POI_COMMIT 47dcff769bb395034dddfd59c4609659b6dbc6a4)
+set(LO_COMMIT 9909bb9e1b9ac7fa5494bb03954af002f2f5107c)
+
+find_package(Git REQUIRED)
+
+function(run)
+  execute_process(COMMAND ${GIT_EXECUTABLE} ${ARGN} RESULT_VARIABLE rc)
+  if(NOT rc EQUAL 0)
+    message(FATAL_ERROR "git ${ARGN} failed")
+  endif()
+endfunction()
+
+function(fetch name url commit pattern)
+  set(dir "${DATA_DIR}/${name}")
+  if(NOT EXISTS "${dir}/.git")
+    file(MAKE_DIRECTORY "${dir}")
+    run(-C "${dir}" init --quiet)
+    run(-C "${dir}" remote add origin "${url}")
+  endif()
+  run(-C "${dir}" sparse-checkout set --no-cone "${pattern}")
+  run(-C "${dir}" fetch --quiet --depth 1 --filter=blob:none origin "${commit}")
+  run(-C "${dir}" checkout --quiet FETCH_HEAD)
+  message(STATUS "${name} at ${commit}")
+endfunction()
+
+fetch(poi https://github.com/apache/poi ${POI_COMMIT} "/test-data/spreadsheet/*.xlsx")
+fetch(libreoffice https://github.com/LibreOffice/core ${LO_COMMIT} "/sc/qa/unit/data/functions/*/fods/*.fods")
